@@ -1,4 +1,4 @@
-package ksnd.webviewplayground.ui
+package ksnd.webviewplayground.ui.navigate
 
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable

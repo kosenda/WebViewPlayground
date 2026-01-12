@@ -1,4 +1,4 @@
-package ksnd.webviewplayground.ui
+package ksnd.webviewplayground.ui.navigate
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState

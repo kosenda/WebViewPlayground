@@ -5,6 +5,11 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
+import ksnd.webviewplayground.ui.navigate.Navigator
+import ksnd.webviewplayground.ui.navigate.Settings
+import ksnd.webviewplayground.ui.navigate.Top
+import ksnd.webviewplayground.ui.navigate.rememberNavigationState
+import ksnd.webviewplayground.ui.navigate.toEntries
 import ksnd.webviewplayground.ui.settings.SettingsScreen
 import ksnd.webviewplayground.ui.top.TopScreen
 

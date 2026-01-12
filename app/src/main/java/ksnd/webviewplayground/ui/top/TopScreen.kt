@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation3.runtime.NavKey
 import ksnd.webviewplayground.R
-import ksnd.webviewplayground.ui.Settings
+import ksnd.webviewplayground.ui.navigate.Settings
 import ksnd.webviewplayground.ui.components.NavigationButton
 
 @OptIn(ExperimentalMaterial3Api::class)
