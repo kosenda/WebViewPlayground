@@ -1,0 +1,36 @@
+package ksnd.webviewplayground.ui
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.dropUnlessResumed
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.ui.NavDisplay
+import ksnd.webviewplayground.ui.settings.SettingsScreen
+import ksnd.webviewplayground.ui.top.TopScreen
+
+@Composable
+fun MainScreen() {
+    val navigationState = rememberNavigationState(
+        startRoute = Top,
+        topLevelRoutes = setOf(Top),
+    )
+    val navigator = remember { Navigator(state = navigationState) }
+
+    val entryProvider = entryProvider {
+        entry<Top> {
+            TopScreen(
+                navigate = navigator::navigate,
+            )
+        }
+        entry<Settings> {
+            SettingsScreen(
+                onBack = dropUnlessResumed(block = navigator::goBack),
+            )
+        }
+    }
+
+    NavDisplay(
+        entries = navigationState.toEntries(entryProvider),
+        onBack = dropUnlessResumed(block = navigator::goBack),
+    )
+}
