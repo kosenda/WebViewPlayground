@@ -2,6 +2,7 @@ package ksnd.webviewplayground.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
@@ -29,6 +30,7 @@ fun MainScreen() {
         }
         entry<Settings> {
             SettingsScreen(
+                viewModel = hiltViewModel(),
                 onBack = dropUnlessResumed(block = navigator::goBack),
             )
         }
