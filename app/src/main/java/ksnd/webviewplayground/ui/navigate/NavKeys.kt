@@ -8,3 +8,8 @@ data object Top : NavKey
 
 @Serializable
 data object Settings : NavKey
+
+@Serializable
+data class SimplestWebView(
+    val url: String,
+) : NavKey

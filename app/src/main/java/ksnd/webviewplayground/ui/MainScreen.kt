@@ -8,11 +8,13 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import ksnd.webviewplayground.ui.navigate.Navigator
 import ksnd.webviewplayground.ui.navigate.Settings
+import ksnd.webviewplayground.ui.navigate.SimplestWebView
 import ksnd.webviewplayground.ui.navigate.Top
 import ksnd.webviewplayground.ui.navigate.rememberNavigationState
 import ksnd.webviewplayground.ui.navigate.toEntries
 import ksnd.webviewplayground.ui.settings.SettingsScreen
 import ksnd.webviewplayground.ui.top.TopScreen
+import ksnd.webviewplayground.ui.webview.SimplestWebViewScreen
 
 @Composable
 fun MainScreen() {
@@ -31,6 +33,12 @@ fun MainScreen() {
         entry<Settings> {
             SettingsScreen(
                 viewModel = hiltViewModel(),
+                onBack = dropUnlessResumed(block = navigator::goBack),
+            )
+        }
+        entry<SimplestWebView> {
+            SimplestWebViewScreen(
+                url = it.url,
                 onBack = dropUnlessResumed(block = navigator::goBack),
             )
         }

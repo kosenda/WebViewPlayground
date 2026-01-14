@@ -3,8 +3,11 @@
 
     <string name="top">トップ</string>
     <string name="settings">設定</string>
+    <string name="simplest_webview">シンプルなWebView</string>
 
     <string name="theme_light">ライト</string>
     <string name="theme_dark">ダーク</string>
     <string name="theme_auto">自動</string>
+
+    <string name="example_url">"https://example.com/"</string>
 </resources>

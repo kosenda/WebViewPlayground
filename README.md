@@ -5,3 +5,4 @@ WebView周りで色々試したり知見をまとめたりするためのリポ�
 - [WebView でウェブアプリを作成する - AndroidDevelopers](https://developer.android.com/develop/ui/views/layout/webapps/webview?hl=ja)
 - [2024年以降でも Android で WebView ベースのアプリを作るあなたへ - Zenn](https://zenn.dev/aldagram_tech/articles/bbb12025b9747d)
 - [WebView wrapper for Jetpack Compose - Accompanist](https://google.github.io/accompanist/web/)
+- [Jetpack Compose で雑に WebView を使いたいとき](https://zenn.dev/kaleidot725/articles/2021-11-13-jc-simple-webview)
