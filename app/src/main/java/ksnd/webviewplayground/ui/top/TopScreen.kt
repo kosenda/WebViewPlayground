@@ -1,5 +1,6 @@
 package ksnd.webviewplayground.ui.top
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -19,8 +20,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation3.runtime.NavKey
 import ksnd.webviewplayground.R
-import ksnd.webviewplayground.ui.navigate.Settings
 import ksnd.webviewplayground.ui.components.NavigationButton
+import ksnd.webviewplayground.ui.navigate.Settings
+import ksnd.webviewplayground.ui.navigate.SimplestWebView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,10 +57,17 @@ private fun TopScreenContent(
             .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState())
             .navigationBarsPadding(),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         NavigationButton(
             text = R.string.settings,
             onClick = dropUnlessResumed { navigate(Settings) },
+        )
+
+        val googleUrl = stringResource(id = R.string.example_url)
+        NavigationButton(
+            text = R.string.simplest_webview,
+            onClick = dropUnlessResumed { navigate(SimplestWebView(url = googleUrl)) },
         )
     }
 }
