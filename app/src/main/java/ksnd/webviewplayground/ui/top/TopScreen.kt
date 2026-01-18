@@ -15,14 +15,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation3.runtime.NavKey
 import ksnd.webviewplayground.R
+import ksnd.webviewplayground.ui.LocalIsDark
 import ksnd.webviewplayground.ui.components.NavigationButton
 import ksnd.webviewplayground.ui.navigate.Settings
 import ksnd.webviewplayground.ui.navigate.SimplestWebView
+import ksnd.webviewplayground.util.WebUtil
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,6 +54,10 @@ private fun TopScreenContent(
     innerPadding: PaddingValues,
     navigate: (route: NavKey) -> Unit,
 ) {
+    val context = LocalContext.current
+    val isDark = LocalIsDark.current
+    val exampleUrl = stringResource(id = R.string.example_url)
+
     Column(
         modifier = Modifier
             .padding(paddingValues = innerPadding)
@@ -63,11 +70,19 @@ private fun TopScreenContent(
             text = R.string.settings,
             onClick = dropUnlessResumed { navigate(Settings) },
         )
-
-        val googleUrl = stringResource(id = R.string.example_url)
         NavigationButton(
             text = R.string.simplest_webview,
-            onClick = dropUnlessResumed { navigate(SimplestWebView(url = googleUrl)) },
+            onClick = dropUnlessResumed { navigate(SimplestWebView(url = exampleUrl)) },
+        )
+
+        NavigationButton(
+            text = R.string.external_browser,
+            onClick = dropUnlessResumed { WebUtil.openExternalBrowser(context = context, url = exampleUrl) },
+        )
+
+        NavigationButton(
+            text = R.string.custom_tabs,
+            onClick = dropUnlessResumed { WebUtil.openCustomTabs(context = context, url = exampleUrl, isDark = isDark) },
         )
     }
 }

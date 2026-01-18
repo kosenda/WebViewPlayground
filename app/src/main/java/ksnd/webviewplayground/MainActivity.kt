@@ -7,6 +7,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import ksnd.webviewplayground.ui.LocalIsDark
 import ksnd.webviewplayground.ui.MainActivityViewModel
 import ksnd.webviewplayground.ui.MainScreen
 import ksnd.webviewplayground.ui.theme.Theme
@@ -77,7 +79,9 @@ class MainActivity : ComponentActivity() {
             WebViewPlaygroundTheme(
                 isDarkTheme = isDarkTheme
             ) {
-                MainScreen()
+                CompositionLocalProvider(LocalIsDark provides isDarkTheme) {
+                    MainScreen()
+                }
             }
         }
     }
