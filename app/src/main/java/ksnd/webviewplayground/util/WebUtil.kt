@@ -3,6 +3,8 @@ package ksnd.webviewplayground.util
 import android.content.Context
 import android.content.Intent
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.browser.customtabs.CustomTabsIntent.ACTIVITY_HEIGHT_DEFAULT
+import androidx.browser.customtabs.CustomTabsIntent.ActivityHeightResizeBehavior
 import androidx.core.net.toUri
 import timber.log.Timber
 
@@ -31,5 +33,25 @@ object WebUtil {
             .build()
 
         customTabsIntent.launchUrl(context, url.toUri())
+    }
+
+    /**
+     * Partial Custom Tabs用のIntentを作成する
+     */
+    fun createPartialCustomTabsIntent(
+        heightPx: Int,
+        isDark: Boolean,
+        cornerRadiusDp: Int = 16,
+        @ActivityHeightResizeBehavior activityHeightResizeBehavior: Int = ACTIVITY_HEIGHT_DEFAULT
+    ): Intent {
+        val colorScheme = if (isDark) CustomTabsIntent.COLOR_SCHEME_DARK else CustomTabsIntent.COLOR_SCHEME_LIGHT
+
+        return CustomTabsIntent.Builder()
+            .setInitialActivityHeightPx(heightPx, activityHeightResizeBehavior)
+            .setColorScheme(colorScheme)
+            .setToolbarCornerRadiusDp(cornerRadiusDp)
+            .setShowTitle(true)
+            .build()
+            .intent
     }
 }

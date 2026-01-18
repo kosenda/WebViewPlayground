@@ -1,5 +1,7 @@
 package ksnd.webviewplayground.ui.top
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,8 +18,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation3.runtime.NavKey
 import ksnd.webviewplayground.R
@@ -26,6 +30,7 @@ import ksnd.webviewplayground.ui.components.NavigationButton
 import ksnd.webviewplayground.ui.navigate.Settings
 import ksnd.webviewplayground.ui.navigate.SimplestWebView
 import ksnd.webviewplayground.util.WebUtil
+import ksnd.webviewplayground.util.WebUtil.createPartialCustomTabsIntent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,6 +88,18 @@ private fun TopScreenContent(
         NavigationButton(
             text = R.string.custom_tabs,
             onClick = dropUnlessResumed { WebUtil.openCustomTabs(context = context, url = exampleUrl, isDark = isDark) },
+        )
+
+        val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
+        val heightPx = LocalWindowInfo.current.containerSize.height / 2
+        NavigationButton(
+            text = R.string.partial_custom_tabs,
+            onClick = dropUnlessResumed {
+                val customTabsIntent = createPartialCustomTabsIntent(heightPx = heightPx, isDark = isDark).apply {
+                    data = exampleUrl.toUri()
+                }
+                launcher.launch(customTabsIntent)
+            },
         )
     }
 }

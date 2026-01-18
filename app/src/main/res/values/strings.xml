@@ -6,6 +6,7 @@
     <string name="simplest_webview">シンプルなWebView</string>
     <string name="external_browser">アプリ外ブラウザ</string>
     <string name="custom_tabs">CustomTabs（アプリ内ブラウザ）</string>
+    <string name="partial_custom_tabs">PartialCustomTabs</string>
 
     <string name="theme_light">ライト</string>
     <string name="theme_dark">ダーク</string>
