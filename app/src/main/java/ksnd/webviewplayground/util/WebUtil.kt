@@ -8,6 +8,9 @@ import androidx.browser.customtabs.CustomTabsIntent.ActivityHeightResizeBehavior
 import androidx.core.net.toUri
 import timber.log.Timber
 
+/**
+ * ウェブブラウザを開くためのユーティリティ関数を提供するオブジェクト
+ */
 object WebUtil {
     /**
      * アプリ外ブラウザで開く
