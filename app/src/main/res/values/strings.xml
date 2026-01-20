@@ -12,5 +12,5 @@
     <string name="theme_dark">ダーク</string>
     <string name="theme_auto">自動</string>
 
-    <string name="example_url">"https://example.com/"</string>
+    <string name="android_developers_url">"https://developer.android.com/"</string>
 </resources>

@@ -61,7 +61,7 @@ private fun TopScreenContent(
 ) {
     val context = LocalContext.current
     val isDark = LocalIsDark.current
-    val exampleUrl = stringResource(id = R.string.example_url)
+    val androidDevelopersUrl = stringResource(id = R.string.android_developers_url)
 
     Column(
         modifier = Modifier
@@ -77,17 +77,17 @@ private fun TopScreenContent(
         )
         NavigationButton(
             text = R.string.webview,
-            onClick = dropUnlessResumed { navigate(WebView(url = exampleUrl)) },
+            onClick = dropUnlessResumed { navigate(WebView(url = androidDevelopersUrl)) },
         )
 
         NavigationButton(
             text = R.string.external_browser,
-            onClick = dropUnlessResumed { WebUtil.openExternalBrowser(context = context, url = exampleUrl) },
+            onClick = dropUnlessResumed { WebUtil.openExternalBrowser(context = context, url = androidDevelopersUrl) },
         )
 
         NavigationButton(
             text = R.string.custom_tabs,
-            onClick = dropUnlessResumed { WebUtil.openCustomTabs(context = context, url = exampleUrl, isDark = isDark) },
+            onClick = dropUnlessResumed { WebUtil.openCustomTabs(context = context, url = androidDevelopersUrl, isDark = isDark) },
         )
 
         val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
@@ -96,7 +96,7 @@ private fun TopScreenContent(
             text = R.string.partial_custom_tabs,
             onClick = dropUnlessResumed {
                 val customTabsIntent = createPartialCustomTabsIntent(heightPx = heightPx, isDark = isDark).apply {
-                    data = exampleUrl.toUri()
+                    data = androidDevelopersUrl.toUri()
                 }
                 launcher.launch(customTabsIntent)
             },
