@@ -1,6 +1,7 @@
 package ksnd.webviewplayground.ui.webview
 
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -25,7 +26,7 @@ import ksnd.webviewplayground.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SimplestWebViewScreen(
+fun WebViewScreen(
     url: String,
     onBack: () -> Unit,
 ) {
@@ -51,7 +52,7 @@ fun SimplestWebViewScreen(
         },
         contentWindowInsets = WindowInsets.statusBars,
     ) { innerPadding ->
-        SimplestWebViewScreenContent(
+        WebViewScreenContent(
             url = url,
             innerPadding = innerPadding,
         )
@@ -59,19 +60,20 @@ fun SimplestWebViewScreen(
 }
 
 @Composable
-private fun SimplestWebViewScreenContent(
+private fun WebViewScreenContent(
     url: String,
     innerPadding: PaddingValues,
 ) {
     AndroidView(
-        factory = ::WebView,
+        factory = { context ->
+            WebView(context).apply {
+                webViewClient = WebViewClient()
+            }
+        },
         modifier = Modifier
             .padding(paddingValues = innerPadding)
             .navigationBarsPadding()
             .fillMaxSize(),
-    ) { webView ->
-        with(webView) {
-            loadUrl(url)
-        }
-    }
+        update = { it.loadUrl(url) }
+    )
 }

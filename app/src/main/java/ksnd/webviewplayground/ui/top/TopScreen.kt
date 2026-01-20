@@ -28,7 +28,7 @@ import ksnd.webviewplayground.R
 import ksnd.webviewplayground.ui.LocalIsDark
 import ksnd.webviewplayground.ui.components.NavigationButton
 import ksnd.webviewplayground.ui.navigate.Settings
-import ksnd.webviewplayground.ui.navigate.SimplestWebView
+import ksnd.webviewplayground.ui.navigate.WebView
 import ksnd.webviewplayground.util.WebUtil
 import ksnd.webviewplayground.util.WebUtil.createPartialCustomTabsIntent
 
@@ -76,8 +76,8 @@ private fun TopScreenContent(
             onClick = dropUnlessResumed { navigate(Settings) },
         )
         NavigationButton(
-            text = R.string.simplest_webview,
-            onClick = dropUnlessResumed { navigate(SimplestWebView(url = exampleUrl)) },
+            text = R.string.webview,
+            onClick = dropUnlessResumed { navigate(WebView(url = exampleUrl)) },
         )
 
         NavigationButton(

@@ -3,7 +3,7 @@
 
     <string name="top">トップ</string>
     <string name="settings">設定</string>
-    <string name="simplest_webview">シンプルなWebView</string>
+    <string name="webview">WebView</string>
     <string name="external_browser">アプリ外ブラウザ</string>
     <string name="custom_tabs">CustomTabs（アプリ内ブラウザ）</string>
     <string name="partial_custom_tabs">PartialCustomTabs</string>

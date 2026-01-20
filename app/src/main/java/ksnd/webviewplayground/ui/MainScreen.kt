@@ -1,7 +1,5 @@
 package ksnd.webviewplayground.ui
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -10,13 +8,13 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import ksnd.webviewplayground.ui.navigate.Navigator
 import ksnd.webviewplayground.ui.navigate.Settings
-import ksnd.webviewplayground.ui.navigate.SimplestWebView
 import ksnd.webviewplayground.ui.navigate.Top
+import ksnd.webviewplayground.ui.navigate.WebView
 import ksnd.webviewplayground.ui.navigate.rememberNavigationState
 import ksnd.webviewplayground.ui.navigate.toEntries
 import ksnd.webviewplayground.ui.settings.SettingsScreen
 import ksnd.webviewplayground.ui.top.TopScreen
-import ksnd.webviewplayground.ui.webview.SimplestWebViewScreen
+import ksnd.webviewplayground.ui.webview.WebViewScreen
 
 @Composable
 fun MainScreen() {
@@ -38,8 +36,8 @@ fun MainScreen() {
                 onBack = dropUnlessResumed(block = navigator::goBack),
             )
         }
-        entry<SimplestWebView> {
-            SimplestWebViewScreen(
+        entry<WebView> {
+            WebViewScreen(
                 url = it.url,
                 onBack = dropUnlessResumed(block = navigator::goBack),
             )
