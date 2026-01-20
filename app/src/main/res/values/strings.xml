@@ -11,6 +11,9 @@
     <string name="theme_light">ライト</string>
     <string name="theme_dark">ダーク</string>
     <string name="theme_auto">自動</string>
+    <string name="retry">リトライ</string>
+
+    <string name="error_message">"エラーが発生しました"</string>
 
     <string name="android_developers_url">"https://developer.android.com/"</string>
 </resources>
