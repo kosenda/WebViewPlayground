@@ -1,5 +1,16 @@
 package ksnd.webviewplayground.ui
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.EaseInOutQuart
+import androidx.compose.animation.core.EaseInQuad
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -30,13 +41,13 @@ fun MainScreen() {
                 navigate = navigator::navigate,
             )
         }
-        entry<Settings> {
+        entry<Settings>(metadata = getHorizontalTransitionMetadata()) {
             SettingsScreen(
                 viewModel = hiltViewModel(),
                 onBack = dropUnlessResumed(block = navigator::goBack),
             )
         }
-        entry<WebView> {
+        entry<WebView>(metadata = getVerticalTransitionMetadata()) {
             WebViewScreen(
                 url = it.url,
                 onBack = dropUnlessResumed(block = navigator::goBack),
@@ -47,5 +58,39 @@ fun MainScreen() {
     NavDisplay(
         entries = navigationState.toEntries(entryProvider),
         onBack = dropUnlessResumed(block = navigator::goBack),
+    )
+}
+
+private fun getHorizontalTransitionMetadata() = NavDisplay.transitionSpec {
+    slideInHorizontally(
+        initialOffsetX = { it },
+        animationSpec = tween(durationMillis = 500, easing = EaseInOutQuart)
+    ) + fadeIn(animationSpec = tween(durationMillis = 500, easing = EaseInQuad)) togetherWith ExitTransition.KeepUntilTransitionsFinished
+} + NavDisplay.popTransitionSpec {
+    EnterTransition.None togetherWith slideOutHorizontally(
+        targetOffsetX = { it },
+        animationSpec = tween(durationMillis = 400, easing = EaseInOutQuart)
+    )
+} + NavDisplay.predictivePopTransitionSpec {
+    EnterTransition.None togetherWith slideOutHorizontally(
+        targetOffsetX = { it },
+        animationSpec = tween(durationMillis = 400, easing = EaseInOutQuart)
+    )
+}
+
+private fun getVerticalTransitionMetadata() = NavDisplay.transitionSpec {
+    slideInVertically(
+        initialOffsetY = { it },
+        animationSpec = tween(durationMillis = 500, easing = EaseInOutQuart)
+    ) + fadeIn(animationSpec = tween(durationMillis = 500, easing = EaseInQuad)) togetherWith ExitTransition.KeepUntilTransitionsFinished
+} + NavDisplay.popTransitionSpec {
+    EnterTransition.None togetherWith slideOutVertically(
+        targetOffsetY = { it },
+        animationSpec = tween(durationMillis = 500, easing = EaseInOutQuart)
+    )
+} + NavDisplay.predictivePopTransitionSpec {
+    EnterTransition.None togetherWith slideOutVertically(
+        targetOffsetY = { it },
+        animationSpec = tween(durationMillis = 500, easing = EaseInOutQuart)
     )
 }
