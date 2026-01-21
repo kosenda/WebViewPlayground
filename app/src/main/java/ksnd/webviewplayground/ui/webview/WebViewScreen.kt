@@ -1,6 +1,7 @@
 package ksnd.webviewplayground.ui.webview
 
 import android.graphics.Bitmap
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -65,6 +66,7 @@ fun WebViewScreen(
 
     var loadingState by remember { mutableStateOf<WebViewScreenLoadingState>(WebViewScreenLoadingState.Initial) }
     var canGoBack by remember { mutableStateOf(false) }
+    var pageTitle by remember { mutableStateOf("") }
     var currentUrl by remember { mutableStateOf("") }
 
     val webView = remember {
@@ -91,6 +93,12 @@ fun WebViewScreen(
                     }
                 }
             }
+            webChromeClient = object : WebChromeClient() {
+                override fun onReceivedTitle(view: WebView?, title: String?) {
+                    super.onReceivedTitle(view, title)
+                    pageTitle = title ?: ""
+                }
+            }
         }
     }
 
@@ -101,7 +109,7 @@ fun WebViewScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = currentUrl,
+                        text = pageTitle.ifEmpty { currentUrl },
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 1,
                     )
