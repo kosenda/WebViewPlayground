@@ -1,6 +1,7 @@
 package ksnd.webviewplayground.ui.webview
 
 import android.graphics.Bitmap
+import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -26,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,6 +36,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -67,6 +70,7 @@ private sealed interface WebViewScreenLoadingState {
 fun WebViewScreen(
     url: String,
     onBack: () -> Unit,
+    javaScriptEnabled: Boolean = false,
 ) {
     val context = LocalContext.current
 
@@ -74,6 +78,7 @@ fun WebViewScreen(
     var canGoBack by remember { mutableStateOf(false) }
     var pageTitle by remember { mutableStateOf("") }
     var currentUrl by remember { mutableStateOf("") }
+    var postMessage by remember { mutableStateOf("") }
 
     // 進捗（0f~1f）
     var progress by remember { mutableStateOf<Float?>(null) }
@@ -102,6 +107,7 @@ fun WebViewScreen(
                     }
                 }
             }
+
             webChromeClient = object : WebChromeClient() {
                 override fun onReceivedTitle(view: WebView?, title: String?) {
                     super.onReceivedTitle(view, title)
@@ -112,6 +118,19 @@ fun WebViewScreen(
                     super.onProgressChanged(view, newProgress)
                     progress = newProgress.toFloat() / 100f
                 }
+            }
+
+            settings.javaScriptEnabled = javaScriptEnabled
+            if (javaScriptEnabled) {
+                addJavascriptInterface(
+                    object {
+                        @JavascriptInterface
+                        fun postMessage(message: String) {
+                            postMessage = message
+                        }
+                    },
+                    "AndroidBridge"
+                )
             }
         }
     }
@@ -198,6 +217,22 @@ fun WebViewScreen(
                 onRetry = webView::reload,
             )
         }
+    }
+
+    if (postMessage.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = { postMessage = "" },
+            confirmButton = {
+                TextButton(
+                    onClick = { postMessage = "" },
+                ) {
+                    Text(text = stringResource(R.string.close))
+                }
+            },
+            text = {
+                Text(text = postMessage)
+            }
+        )
     }
 }
 

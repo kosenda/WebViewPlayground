@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Simple WebView Bridge</title>
+</head>
+<body>
+
+<p id="msg">待機中...</p>
+
+<input type="text" id="inputField" placeholder="文字を入力">
+<button onclick="send()">Androidへ送信</button>
+
+<script>
+    // Androidから実行される関数
+    function updateFromAndroid(text) {
+        document.getElementById('msg').innerText = text;
+    }
+
+    // ボタンを押した時に実行される関数
+    function send() {
+        const text = document.getElementById('inputField').value;
+        // Android側のインターフェースを呼び出す
+        if (window.AndroidBridge) {
+            window.AndroidBridge.postMessage(text);
+        }
+    }
+</script>
+
+</body>
+</html>
