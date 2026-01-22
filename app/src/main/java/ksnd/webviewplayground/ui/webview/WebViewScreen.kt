@@ -10,6 +10,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -27,11 +30,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,13 +52,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlinx.coroutines.delay
 import ksnd.webviewplayground.R
 
-private sealed interface WebViewScreenLoadingState{
-    data object Initial: WebViewScreenLoadingState
-    data object Loading: WebViewScreenLoadingState
-    data object Error: WebViewScreenLoadingState
-    data object Success: WebViewScreenLoadingState
+private sealed interface WebViewScreenLoadingState {
+    data object Initial : WebViewScreenLoadingState
+    data object Loading : WebViewScreenLoadingState
+    data object Error : WebViewScreenLoadingState
+    data object Success : WebViewScreenLoadingState
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,6 +74,9 @@ fun WebViewScreen(
     var canGoBack by remember { mutableStateOf(false) }
     var pageTitle by remember { mutableStateOf("") }
     var currentUrl by remember { mutableStateOf("") }
+
+    // 進捗（0f~1f）
+    var progress by remember { mutableStateOf<Float?>(null) }
 
     val webView = remember {
         WebView(context).apply {
@@ -98,7 +107,19 @@ fun WebViewScreen(
                     super.onReceivedTitle(view, title)
                     pageTitle = title ?: ""
                 }
+
+                override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                    super.onProgressChanged(view, newProgress)
+                    progress = newProgress.toFloat() / 100f
+                }
             }
+        }
+    }
+
+    LaunchedEffect(progress) {
+        if (progress == 1f) {
+            delay(500)
+            progress = null
         }
     }
 
@@ -154,11 +175,28 @@ fun WebViewScreen(
         )
 
         AnimatedVisibility(
+            visible = progress != null,
+            modifier = Modifier.padding(paddingValues = innerPadding),
+            enter = slideInVertically(),
+            exit = slideOutVertically(),
+        ) {
+            progress?.let {
+                LinearProgressIndicator(
+                    progress = { it },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+
+        AnimatedVisibility(
             visible = loadingState is WebViewScreenLoadingState.Error,
+            modifier = Modifier.padding(paddingValues = innerPadding),
             enter = EnterTransition.None,
             exit = fadeOut(),
         ) {
-            ErrorContent(onRetry = webView::reload)
+            ErrorContent(
+                onRetry = webView::reload,
+            )
         }
     }
 }
@@ -168,7 +206,7 @@ private fun ErrorContent(
     modifier: Modifier = Modifier,
     onRetry: () -> Unit,
 ) {
-    Column (
+    Column(
         modifier = modifier
             .background(MaterialTheme.colorScheme.surface)
             .fillMaxSize(),
