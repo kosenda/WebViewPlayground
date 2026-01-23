@@ -125,6 +125,7 @@ fun WebViewScreen(
 
             settings.javaScriptEnabled = javaScriptEnabled
             if (javaScriptEnabled) {
+                @Suppress("unused")
                 addJavascriptInterface(
                     object {
                         @JavascriptInterface
