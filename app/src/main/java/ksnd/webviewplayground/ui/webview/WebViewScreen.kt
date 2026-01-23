@@ -43,6 +43,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,6 +57,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import ksnd.webviewplayground.R
 
 private sealed interface WebViewScreenLoadingState {
@@ -73,12 +75,13 @@ fun WebViewScreen(
     javaScriptEnabled: Boolean = false,
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     var loadingState by remember { mutableStateOf<WebViewScreenLoadingState>(WebViewScreenLoadingState.Initial) }
     var canGoBack by remember { mutableStateOf(false) }
     var pageTitle by remember { mutableStateOf("") }
     var currentUrl by remember { mutableStateOf("") }
-    var postMessage by remember { mutableStateOf("") }
+    var receivedMessage by remember { mutableStateOf("") }
 
     // 進捗（0f~1f）
     var progress by remember { mutableStateOf<Float?>(null) }
@@ -126,7 +129,9 @@ fun WebViewScreen(
                     object {
                         @JavascriptInterface
                         fun postMessage(message: String) {
-                            postMessage = message
+                            coroutineScope.launch {
+                                receivedMessage = message
+                            }
                         }
                     },
                     "AndroidBridge"
@@ -219,18 +224,21 @@ fun WebViewScreen(
         }
     }
 
-    if (postMessage.isNotEmpty()) {
+    if (receivedMessage.isNotEmpty()) {
         AlertDialog(
-            onDismissRequest = { postMessage = "" },
+            onDismissRequest = { receivedMessage = "" },
+            title = {
+                Text(text = stringResource(R.string.message_from_web))
+            },
             confirmButton = {
                 TextButton(
-                    onClick = { postMessage = "" },
+                    onClick = { receivedMessage = "" },
                 ) {
                     Text(text = stringResource(R.string.close))
                 }
             },
             text = {
-                Text(text = postMessage)
+                Text(text = receivedMessage)
             }
         )
     }
