@@ -141,6 +141,10 @@ fun WebViewScreen(
         }
     }
 
+    fun dismissMessageDialog() {
+        receivedMessage = ""
+    }
+
     LaunchedEffect(progress) {
         if (progress == 1f) {
             delay(500)
@@ -227,13 +231,13 @@ fun WebViewScreen(
 
     if (receivedMessage.isNotEmpty()) {
         AlertDialog(
-            onDismissRequest = { receivedMessage = "" },
+            onDismissRequest = ::dismissMessageDialog,
             title = {
                 Text(text = stringResource(R.string.message_from_web))
             },
             confirmButton = {
                 TextButton(
-                    onClick = { receivedMessage = "" },
+                    onClick = ::dismissMessageDialog,
                 ) {
                     Text(text = stringResource(R.string.close))
                 }
