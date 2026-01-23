@@ -17,6 +17,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
+import ksnd.webviewplayground.ui.navigate.LocalHTMLWebView
 import ksnd.webviewplayground.ui.navigate.Navigator
 import ksnd.webviewplayground.ui.navigate.Settings
 import ksnd.webviewplayground.ui.navigate.Top
@@ -51,6 +52,13 @@ fun MainScreen() {
             WebViewScreen(
                 url = it.url,
                 onBack = dropUnlessResumed(block = navigator::goBack),
+            )
+        }
+        entry<LocalHTMLWebView>(metadata = getVerticalTransitionMetadata()) {
+            WebViewScreen(
+                url = it.url,
+                onBack = dropUnlessResumed(block = navigator::goBack),
+                javaScriptEnabled = true
             )
         }
     }

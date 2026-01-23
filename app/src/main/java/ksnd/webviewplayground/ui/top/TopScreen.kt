@@ -27,6 +27,7 @@ import androidx.navigation3.runtime.NavKey
 import ksnd.webviewplayground.R
 import ksnd.webviewplayground.ui.LocalIsDark
 import ksnd.webviewplayground.ui.components.NavigationButton
+import ksnd.webviewplayground.ui.navigate.LocalHTMLWebView
 import ksnd.webviewplayground.ui.navigate.Settings
 import ksnd.webviewplayground.ui.navigate.WebView
 import ksnd.webviewplayground.util.WebUtil
@@ -75,9 +76,15 @@ private fun TopScreenContent(
             text = R.string.settings,
             onClick = dropUnlessResumed { navigate(Settings) },
         )
+
         NavigationButton(
             text = R.string.webview,
             onClick = dropUnlessResumed { navigate(WebView(url = androidDevelopersUrl)) },
+        )
+
+        NavigationButton(
+            text = R.string.local_html_webview,
+            onClick = dropUnlessResumed { navigate(LocalHTMLWebView(url = "file:///android_asset/example.html")) },
         )
 
         NavigationButton(

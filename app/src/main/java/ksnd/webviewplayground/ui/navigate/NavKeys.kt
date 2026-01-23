@@ -13,3 +13,8 @@ data object Settings : NavKey
 data class WebView(
     val url: String,
 ) : NavKey
+
+@Serializable
+data class LocalHTMLWebView(
+    val url: String,
+) : NavKey
