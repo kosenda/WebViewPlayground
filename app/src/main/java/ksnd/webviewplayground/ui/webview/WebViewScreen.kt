@@ -6,6 +6,7 @@ import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
+import android.webkit.WebView.setWebContentsDebuggingEnabled
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -58,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import ksnd.webviewplayground.BuildConfig
 import ksnd.webviewplayground.R
 
 private sealed interface WebViewScreenLoadingState {
@@ -137,6 +139,10 @@ fun WebViewScreen(
                     },
                     "AndroidBridge"
                 )
+            }
+
+            if (BuildConfig.DEBUG) {
+                setWebContentsDebuggingEnabled(true)
             }
         }
     }
