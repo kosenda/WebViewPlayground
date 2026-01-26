@@ -1,5 +1,6 @@
 package ksnd.webviewplayground.ui.webview
 
+import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
@@ -59,7 +60,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import ksnd.webviewplayground.BuildConfig
 import ksnd.webviewplayground.R
 
 private sealed interface WebViewScreenLoadingState {
@@ -141,7 +141,8 @@ fun WebViewScreen(
                 )
             }
 
-            if (BuildConfig.DEBUG) {
+            // debuggable が true の場合にのみ WebView デバッグを有効にする
+            if (0 != (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE)) {
                 setWebContentsDebuggingEnabled(true)
             }
         }
