@@ -149,6 +149,10 @@ fun WebViewScreen(
     }
 
     fun dismissMessageDialog() {
+        // Dialogを閉じた時にWebページに通知を送る
+        val jsCode = "javascript:updateFromAndroid('最後に送信したメッセージ: $receivedMessage')"
+        webView.loadUrl(jsCode)
+
         receivedMessage = ""
     }
 
