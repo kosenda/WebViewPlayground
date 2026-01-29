@@ -13,7 +13,6 @@ WebView周りで色々試したり知見をまとめたりするためのリポ�
 - WebViewの基本機能・動作関連
     - Cookie管理: CookieManagerを使った永続化やサードパーティCookie制御
     - キャッシュ制御: キャッシュモード（LOAD_DEFAULT/LOAD_CACHE_ELSE_NETWORK等）の挙動確認
-    - ページ内検索: findAllAsync()を使ったページ内テキスト検索機能
     - スクロール位置の保存と復元: 画面回転時などの状態保持
 - ファイル・メディア関連
     - ファイルアップロード: <input type="file">からのファイル選択（WebChromeClientのonShowFileChooser）
