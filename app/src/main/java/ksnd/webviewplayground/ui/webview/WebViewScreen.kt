@@ -12,13 +12,16 @@ import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,7 +31,10 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -36,6 +42,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -43,6 +50,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -51,9 +59,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -84,6 +94,12 @@ fun WebViewScreen(
     var pageTitle by remember { mutableStateOf("") }
     var currentUrl by remember { mutableStateOf("") }
     var receivedMessage by remember { mutableStateOf("") }
+
+    // ページ内検索
+    var isSearchVisible by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    var searchResultCount by remember { mutableIntStateOf(0) }
+    var currentSearchIndex by remember { mutableIntStateOf(0) }
 
     // 進捗（0f~1f）
     var progress by remember { mutableStateOf<Float?>(null) }
@@ -145,6 +161,14 @@ fun WebViewScreen(
             if (0 != (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE)) {
                 setWebContentsDebuggingEnabled(true)
             }
+
+            // ページ内検索
+            setFindListener { activeMatchOrdinal, numberOfMatches, isDoneCounting ->
+                if (isDoneCounting) {
+                    searchResultCount = numberOfMatches
+                    currentSearchIndex = if (numberOfMatches > 0) activeMatchOrdinal + 1 else 0
+                }
+            }
         }
     }
 
@@ -154,6 +178,25 @@ fun WebViewScreen(
         webView.loadUrl(jsCode)
 
         receivedMessage = ""
+    }
+
+    fun search(query: String) {
+        searchQuery = query
+        if (query.isNotEmpty()) {
+            webView.findAllAsync(query)
+        } else {
+            webView.clearMatches()
+            searchResultCount = 0
+            currentSearchIndex = 0
+        }
+    }
+
+    fun clearSearch() {
+        webView.clearMatches()
+        searchQuery = ""
+        searchResultCount = 0
+        currentSearchIndex = 0
+        isSearchVisible = false
     }
 
     LaunchedEffect(progress) {
@@ -191,6 +234,16 @@ fun WebViewScreen(
                 },
                 actions = {
                     IconButton(
+                        onClick = { isSearchVisible = !isSearchVisible },
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_search),
+                            contentDescription = stringResource(R.string.search),
+                            modifier = Modifier.size(32.dp),
+                            colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.primary),
+                        )
+                    }
+                    IconButton(
                         onClick = onBack,
                     ) {
                         Image(
@@ -205,14 +258,37 @@ fun WebViewScreen(
         },
         contentWindowInsets = WindowInsets.statusBars,
     ) { innerPadding ->
-        AndroidView(
-            factory = { webView },
+        Column(
             modifier = Modifier
                 .padding(paddingValues = innerPadding)
-                .navigationBarsPadding()
-                .fillMaxSize(),
-            update = { it.loadUrl(url) }
-        )
+                .fillMaxSize()
+        ) {
+            // 検索バー
+            AnimatedVisibility(
+                visible = isSearchVisible,
+                enter = slideInVertically() + expandVertically(),
+                exit = slideOutVertically() + shrinkVertically(),
+            ) {
+                SearchBar(
+                    query = searchQuery,
+                    onQueryChange = ::search,
+                    resultCount = searchResultCount,
+                    currentIndex = currentSearchIndex,
+                    onPrevious = { webView.findNext(false) },
+                    onNext = { webView.findNext(true) },
+                    onClose = ::clearSearch,
+                )
+            }
+
+            // WebView
+            AndroidView(
+                factory = { webView },
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .fillMaxSize(),
+                update = { it.loadUrl(url) }
+            )
+        }
 
         AnimatedVisibility(
             visible = progress != null,
@@ -292,6 +368,97 @@ private fun ErrorContent(
             Text(
                 text = stringResource(id = R.string.retry),
                 fontWeight = FontWeight.Bold,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    resultCount: Int,
+    currentIndex: Int,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    Row(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.surface)
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            modifier = Modifier.weight(1f),
+            placeholder = {
+                Text(text = stringResource(R.string.search_hint))
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    keyboardController?.hide()
+                }
+            ),
+        )
+
+        // 検索結果表示
+        if (query.isNotEmpty()) {
+            Text(
+                text = if (resultCount > 0) {
+                    stringResource(R.string.search_result, currentIndex, resultCount)
+                } else {
+                    stringResource(R.string.search_no_result)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.width(80.dp),
+            )
+
+            // 前へ
+            IconButton(
+                onClick = onPrevious,
+                enabled = resultCount > 0,
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_arrow_up),
+                    contentDescription = stringResource(R.string.previous),
+                    modifier = Modifier.size(24.dp),
+                    colorFilter = ColorFilter.tint(
+                        color = if (resultCount > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                )
+            }
+
+            // 次へ
+            IconButton(
+                onClick = onNext,
+                enabled = resultCount > 0,
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_arrow_down),
+                    contentDescription = stringResource(R.string.next),
+                    modifier = Modifier.size(24.dp),
+                    colorFilter = ColorFilter.tint(
+                        color = if (resultCount > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                )
+            }
+        }
+
+        IconButton(onClick = onClose) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_close),
+                contentDescription = stringResource(R.string.close),
+                modifier = Modifier.size(24.dp),
+                colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.primary),
             )
         }
     }

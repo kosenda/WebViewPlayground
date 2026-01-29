@@ -18,5 +18,12 @@
 
     <string name="error_message">"エラーが発生しました"</string>
 
+    <string name="search">検索</string>
+    <string name="search_hint">ページ内検索</string>
+    <string name="search_result">%1$d/%2$d</string>
+    <string name="search_no_result">見つかりませんでした</string>
+    <string name="previous">前へ</string>
+    <string name="next">次へ</string>
+
     <string name="android_developers_url">"https://developer.android.com/"</string>
 </resources>
