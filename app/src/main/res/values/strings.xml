@@ -24,6 +24,11 @@
     <string name="search_no_result">見つかりませんでした</string>
     <string name="previous">前へ</string>
     <string name="next">次へ</string>
+    <string name="save_image">画像を保存</string>
+    <string name="cancel">キャンセル</string>
+    <string name="image_saved">画像を保存しました</string>
+    <string name="image_save_failed">画像の保存に失敗しました</string>
+    <string name="view">表示</string>
 
     <string name="android_developers_url">"https://developer.android.com/"</string>
 </resources>
