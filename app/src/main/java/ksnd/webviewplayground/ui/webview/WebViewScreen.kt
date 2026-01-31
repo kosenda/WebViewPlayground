@@ -320,16 +320,7 @@ fun WebViewScreen(
                         }
                     } else {
                         // 標準画像以外の場合は、ダウンロードフォルダそのものを開く
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            // Android 10以降: ダウンロードマネージャーの画面を開く
-                            Intent(DownloadManager.ACTION_VIEW_DOWNLOADS)
-                        } else {
-                            // Android 9以前: 汎用的なフォルダ閲覧（ファイルマネージャー）
-                            Intent(Intent.ACTION_GET_CONTENT).apply {
-                                type = "*/*"
-                                addCategory(Intent.CATEGORY_OPENABLE)
-                            }
-                        }
+                        Intent(DownloadManager.ACTION_VIEW_DOWNLOADS)
                     }
 
                     runCatching {
