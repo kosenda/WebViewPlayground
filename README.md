@@ -4,7 +4,7 @@ WebView周りで色々試したり知見をまとめたりするためのリポ�
 知見などは一旦 [メモ.md](docs/メモ.md) にまとめる
 
 > [!WARNING]
-> WebViewはセキュリティ面で注意すべき点が多くあります
+> WebViewはセキュリティ面で注意すべき点が多くあります  
 > 実装前後にセキュリティガイドラインを確認することを強く推奨します
 > - [OWASP Mobile Application Security](https://mas.owasp.org/MASTG/)
 > - [アプリのセキュリティを強化する - Android Developers](https://developer.android.com/privacy-and-security/security-best-practices?hl=ja)
