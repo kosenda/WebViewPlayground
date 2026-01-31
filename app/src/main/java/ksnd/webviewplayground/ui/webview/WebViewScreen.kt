@@ -251,7 +251,7 @@ fun WebViewScreen(
                     "application/octet-stream" // SVG等は画像フォルダを避けるために汎用バイナリとして扱う
                 }
 
-                val fileName = "file_${System.currentTimeMillis()}.$extension"
+                val fileName = "image_${System.currentTimeMillis()}.$extension"
                 val resolver = context.contentResolver
                 val contentValues = ContentValues().apply {
                     put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
@@ -281,7 +281,9 @@ fun WebViewScreen(
                     } ?: error("Failed to open output stream")
                 }
                 Triple(uri, mimeType, isStandardImage)
-            }.onFailure { Timber.w(it) }
+            }.onFailure { e ->
+                Timber.w(e, "Failed to save image: $url")
+            }
         }
 
         if (result.isSuccess) {
@@ -312,7 +314,11 @@ fun WebViewScreen(
                         }
                     }
 
-                    context.startActivity(intent)
+                    runCatching {
+                        context.startActivity(intent)
+                    }.onFailure { e ->
+                        Timber.w(e, "Failed to start activity to view saved image")
+                    }
                 }
             }
         } else {
