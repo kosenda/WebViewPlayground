@@ -1,8 +1,16 @@
 package ksnd.webviewplayground.ui.webview
 
+import android.Manifest
+import android.app.DownloadManager
+import android.content.ContentValues
+import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import android.webkit.JavascriptInterface
+import android.webkit.MimeTypeMap
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -10,6 +18,8 @@ import android.webkit.WebView
 import android.webkit.WebView.setWebContentsDebuggingEnabled
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.expandVertically
@@ -44,6 +54,9 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -68,9 +81,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ksnd.webviewplayground.R
+import timber.log.Timber
+import java.net.URL
 
 private sealed interface WebViewScreenLoadingState {
     data object Initial : WebViewScreenLoadingState
@@ -87,7 +104,13 @@ fun WebViewScreen(
     javaScriptEnabled: Boolean = false,
 ) {
     val context = LocalContext.current
+
+    val imageSavedMessage = stringResource(R.string.image_saved)
+    val imageSaveFailedMessage = stringResource(R.string.image_save_failed)
+    val viewActionLabel = stringResource(R.string.view)
+
     val coroutineScope = rememberCoroutineScope()
+    val snackBarHostState = remember { SnackbarHostState() }
 
     var loadingState by remember { mutableStateOf<WebViewScreenLoadingState>(WebViewScreenLoadingState.Initial) }
     var canGoBack by remember { mutableStateOf(false) }
@@ -100,6 +123,9 @@ fun WebViewScreen(
     var searchQuery by remember { mutableStateOf("") }
     var searchResultCount by remember { mutableIntStateOf(0) }
     var currentSearchIndex by remember { mutableIntStateOf(0) }
+
+    // 画像長押し保存可能な画像のURL
+    var imageUrlToSave by remember { mutableStateOf<String?>(null) }
 
     // 進捗（0f~1f）
     var progress by remember { mutableStateOf<Float?>(null) }
@@ -169,6 +195,19 @@ fun WebViewScreen(
                     currentSearchIndex = if (numberOfMatches > 0) activeMatchOrdinal + 1 else 0
                 }
             }
+
+            // 長押し
+            setOnLongClickListener {
+                // 長押しした結果が画像もしくは画像リンクの場合だけ後続の処理を進め、それ以外の場合は何もしない
+                if (hitTestResult.type != WebView.HitTestResult.IMAGE_TYPE && hitTestResult.type != WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE) {
+                    return@setOnLongClickListener false
+                }
+
+                hitTestResult.extra?.let { imageUrl ->
+                    imageUrlToSave = imageUrl
+                }
+                true
+            }
         }
     }
 
@@ -199,6 +238,122 @@ fun WebViewScreen(
         isSearchVisible = false
     }
 
+    fun clearImageUrlToSave() {
+        imageUrlToSave = null
+    }
+
+    suspend fun saveImage(url: String) {
+        val result = withContext(Dispatchers.IO) {
+            runCatching {
+                // 拡張子とMIMEタイプを特定し標準画像(PNG/JPG)かどうか判定
+                val extension = MimeTypeMap.getFileExtensionFromUrl(url).lowercase()
+                val isStandardImage = extension in listOf("png", "jpg", "jpeg")
+                val mimeType = if (isStandardImage) {
+                    MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "image/jpeg"
+                } else {
+                    "application/octet-stream" // SVG等は画像フォルダを避けるために汎用バイナリとして扱う
+                }
+
+                val fileName = "image_${System.currentTimeMillis()}.$extension"
+                val resolver = context.contentResolver
+
+                // 保存先URIとContentValuesの決定
+                val (collectionUri, contentValues) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    // Android 10以降: Scoped Storageを使用
+                    val folder = if (isStandardImage) Environment.DIRECTORY_PICTURES else Environment.DIRECTORY_DOWNLOADS
+                    val uri = if (isStandardImage) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Downloads.EXTERNAL_CONTENT_URI
+                    val values = ContentValues().apply {
+                        put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                        put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                        put(MediaStore.MediaColumns.RELATIVE_PATH, folder)
+                    }
+                    uri to values
+                } else {
+                    // Android 9以前: 絶対パスを使用
+                    @Suppress("DEPRECATION")
+                    val folder = Environment.getExternalStoragePublicDirectory(
+                        if (isStandardImage)  Environment.DIRECTORY_PICTURES  else Environment.DIRECTORY_DOWNLOADS
+                    )
+                    folder.mkdirs() // フォルダが存在しない場合は作成
+
+                    val file = java.io.File(folder, fileName)
+                    val values = ContentValues().apply {
+                        put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                        put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                        put(MediaStore.MediaColumns.DATA, file.absolutePath)
+                    }
+                    val uri = if (isStandardImage) {
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                    } else {
+                        MediaStore.Files.getContentUri("external")
+                    }
+                    uri to values
+                }
+
+                val uri = resolver.insert(collectionUri, contentValues) ?: error("Failed to create MediaStore entry")
+
+                // データの書き込み
+                URL(url).openStream().use { input ->
+                    resolver.openOutputStream(uri)?.use { output ->
+                        input.copyTo(output)
+                    } ?: error("Failed to open output stream")
+                }
+                Triple(uri, mimeType, isStandardImage)
+            }.onFailure { e ->
+                Timber.w(e, "Failed to save image: $url")
+            }
+        }
+
+        if (result.isSuccess) {
+            val (savedUri, mimeType, isStandardImage) = result.getOrThrow()
+
+            snackBarHostState.showSnackbar(
+                message = imageSavedMessage,
+                actionLabel = viewActionLabel,
+                withDismissAction = true,
+            ).let { snackBarResult ->
+                if (snackBarResult == SnackbarResult.ActionPerformed) {
+                    val intent = if (isStandardImage) {
+                        Intent(Intent.ACTION_VIEW).apply {
+                            setDataAndType(savedUri, mimeType)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                    } else {
+                        // 標準画像以外の場合は、ダウンロードフォルダそのものを開く
+                        Intent(DownloadManager.ACTION_VIEW_DOWNLOADS)
+                    }
+
+                    runCatching {
+                        context.startActivity(intent)
+                    }.onFailure { e ->
+                        Timber.w(e, "Failed to start activity to view saved image")
+                    }
+                }
+            }
+        } else {
+            snackBarHostState.showSnackbar(message = imageSaveFailedMessage)
+        }
+    }
+
+    // Android 9以前用のストレージパーミッションランチャー
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            imageUrlToSave?.let { url ->
+                coroutineScope.launch {
+                    saveImage(url)
+                }
+                clearImageUrlToSave()
+            }
+        } else {
+            coroutineScope.launch {
+                snackBarHostState.showSnackbar(message = imageSaveFailedMessage)
+            }
+            clearImageUrlToSave()
+        }
+    }
+
     LaunchedEffect(progress) {
         if (progress == 1f) {
             delay(500)
@@ -209,6 +364,12 @@ fun WebViewScreen(
     BackHandler(enabled = canGoBack, onBack = webView::goBack)
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackBarHostState,
+                modifier = Modifier.navigationBarsPadding()
+            )
+        },
         topBar = {
             TopAppBar(
                 title = {
@@ -331,6 +492,42 @@ fun WebViewScreen(
             },
             text = {
                 Text(text = receivedMessage)
+            }
+        )
+    }
+
+    imageUrlToSave?.let { url ->
+        AlertDialog(
+            onDismissRequest = ::clearImageUrlToSave,
+            title = {
+                Text(text = stringResource(R.string.save_image))
+            },
+            text = {
+                Text(text = url)
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // Android 9以前ではWRITE_EXTERNAL_STORAGEパーミッションが必要
+                        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                            permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        } else {
+                            // Android 10以降はScoped Storageのためパーミッション不要
+                            coroutineScope.launch {
+                                saveImage(url)
+                            }
+                            clearImageUrlToSave()
+                        }
+                    },
+                ) {
+                    Text(text = stringResource(R.string.save_image))
+                }
+            }, dismissButton = {
+                TextButton(
+                    onClick = ::clearImageUrlToSave,
+                ) {
+                    Text(text = stringResource(R.string.cancel))
+                }
             }
         )
     }

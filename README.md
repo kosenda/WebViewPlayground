@@ -18,7 +18,6 @@ WebView周りで色々試したり知見をまとめたりするためのリポ�
 - ファイル・メディア関連
     - ファイルアップロード: <input type="file">からのファイル選択（WebChromeClientのonShowFileChooser）
     - ダウンロード処理: DownloadListenerを使ったファイルダウンロード
-    - 画像の長押し保存: HitTestResultを使った画像の取得・保存
 - レンダリング・表示関連
     - ダークモード対応: forceDark設定とprefers-color-schemeの連携
     - ズーム機能: ピンチズームの有効化/初期スケール設定
