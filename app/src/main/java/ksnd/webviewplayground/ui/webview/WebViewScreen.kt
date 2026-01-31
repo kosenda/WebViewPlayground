@@ -1,5 +1,6 @@
 package ksnd.webviewplayground.ui.webview
 
+import android.Manifest
 import android.app.DownloadManager
 import android.content.ContentValues
 import android.content.Intent
@@ -17,6 +18,8 @@ import android.webkit.WebView
 import android.webkit.WebView.setWebContentsDebuggingEnabled
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.expandVertically
@@ -253,25 +256,40 @@ fun WebViewScreen(
 
                 val fileName = "image_${System.currentTimeMillis()}.$extension"
                 val resolver = context.contentResolver
-                val contentValues = ContentValues().apply {
-                    put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
-                    put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
-                    /* Android 10 (API 29) 以降の対応:
-                     *   Scoped Storageにより、ファイルを保存する相対パス（RELATIVE_PATH）を明示的に指定する必要がある。
-                     *   標準画像（PNG/JPG）は「Pictures」フォルダ、それ以外（SVG/PDF等）は「Downloads」フォルダに振り分ける。*/
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        val folder = if (isStandardImage) Environment.DIRECTORY_PICTURES else Environment.DIRECTORY_DOWNLOADS
+
+                // 保存先URIとContentValuesの決定
+                val (collectionUri, contentValues) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    // Android 10以降: Scoped Storageを使用
+                    val folder = if (isStandardImage) Environment.DIRECTORY_PICTURES else Environment.DIRECTORY_DOWNLOADS
+                    val uri = if (isStandardImage) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Downloads.EXTERNAL_CONTENT_URI
+                    val values = ContentValues().apply {
+                        put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                        put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
                         put(MediaStore.MediaColumns.RELATIVE_PATH, folder)
                     }
+                    uri to values
+                } else {
+                    // Android 9以前: 絶対パスを使用
+                    @Suppress("DEPRECATION")
+                    val folder = Environment.getExternalStoragePublicDirectory(
+                        if (isStandardImage)  Environment.DIRECTORY_PICTURES  else Environment.DIRECTORY_DOWNLOADS
+                    )
+                    folder.mkdirs() // フォルダが存在しない場合は作成
+
+                    val file = java.io.File(folder, fileName)
+                    val values = ContentValues().apply {
+                        put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                        put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                        put(MediaStore.MediaColumns.DATA, file.absolutePath)
+                    }
+                    val uri = if (isStandardImage) {
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                    } else {
+                        MediaStore.Files.getContentUri("external")
+                    }
+                    uri to values
                 }
 
-                // 保存先URIの決定
-                val collectionUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    if (isStandardImage) MediaStore.Images.Media.EXTERNAL_CONTENT_URI else MediaStore.Downloads.EXTERNAL_CONTENT_URI
-                } else {
-                    // Android 9以前は汎用的なFilesを使用
-                    MediaStore.Files.getContentUri("external")
-                }
                 val uri = resolver.insert(collectionUri, contentValues) ?: error("Failed to create MediaStore entry")
 
                 // データの書き込み
@@ -323,6 +341,25 @@ fun WebViewScreen(
             }
         } else {
             snackBarHostState.showSnackbar(message = imageSaveFailedMessage)
+        }
+    }
+
+    // Android 9以前用のストレージパーミッションランチャー
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            imageUrlToSave?.let { url ->
+                coroutineScope.launch {
+                    saveImage(url)
+                }
+                clearImageUrlToSave()
+            }
+        } else {
+            coroutineScope.launch {
+                snackBarHostState.showSnackbar(message = imageSaveFailedMessage)
+            }
+            clearImageUrlToSave()
         }
     }
 
@@ -480,10 +517,16 @@ fun WebViewScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        coroutineScope.launch {
-                            saveImage(url)
+                        // Android 9以前ではWRITE_EXTERNAL_STORAGEパーミッションが必要
+                        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                            permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        } else {
+                            // Android 10以降はScoped Storageのためパーミッション不要
+                            coroutineScope.launch {
+                                saveImage(url)
+                            }
+                            clearImageUrlToSave()
                         }
-                        clearImageUrlToSave()
                     },
                 ) {
                     Text(text = stringResource(R.string.save_image))
